@@ -7,7 +7,7 @@ from torch import nn
 
 from .attention import BahdanauAttention, AttentionWrapper
 from .attention import get_mask_from_lengths
-
+from .model.treelstm import BinaryTreeLSTM
 
 class Prenet(nn.Module):
     def __init__(self, in_dim, sizes=[256, 128]):
@@ -147,6 +147,16 @@ class Encoder(nn.Module):
         inputs = self.prenet(inputs)
         return self.cbhg(inputs, input_lengths)
 
+class TreeEncoder(nn.Module):
+    def __init__(self, in_dim):
+        super(TreeEncoder, self).__init__()
+        self.prenet = Prenet(in_dim, sizes=[256, 128])
+        self.treelstm = BinaryTreeLSTM(word_dim=128, hidden_dim=16, use_leaf_rnn=True, intra_attention=False, gumbel_temperature=1, bidirectional=True)
+
+    def forward(self, inputs, input_lengths=None):
+        inputs = self.prenet(inputs)
+        return self.treelstm(inputs, input_lengths)
+
 
 class Decoder(nn.Module):
     def __init__(self, in_dim, r):
@@ -160,7 +170,7 @@ class Decoder(nn.Module):
             BahdanauAttention(256)
         )
         self.memory_layer = nn.Linear(256, 256, bias=False)
-        self.project_to_decoder_in = nn.Linear(512, 256)
+        self.project_to_decoder_in = nn.Linear(640, 256) #256 + 256 + 128
 
         self.decoder_rnns = nn.ModuleList(
             [nn.GRUCell(256, 256) for _ in range(2)])
@@ -168,7 +178,7 @@ class Decoder(nn.Module):
         self.proj_to_mel = nn.Linear(256, in_dim * r)
         self.max_decoder_steps = 200
 
-    def forward(self, encoder_outputs, inputs=None, memory_lengths=None):
+    def forward(self, encoder_outputs, prosody_embedding, inputs=None, memory_lengths=None):
         """
         Decoder forward step.
 
@@ -235,7 +245,7 @@ class Decoder(nn.Module):
 
             # Concat RNN output and attention context vector
             decoder_input = self.project_to_decoder_in(
-                torch.cat((attention_rnn_hidden, current_attention), -1))
+                torch.cat((attention_rnn_hidden, current_attention, prosody_embedding), -1))
 
             # Pass through the decoder RNNs
             for idx in range(len(self.decoder_rnns)):
@@ -287,6 +297,7 @@ class Tacotron(nn.Module):
         # Trying smaller std
         self.embedding.weight.data.normal_(0, 0.3)
         self.encoder = Encoder(embedding_dim)
+        self.treeencoder = TreeEncoder(embedding_dim)
         self.decoder = Decoder(mel_dim, r)
 
         self.postnet = CBHG(mel_dim, K=8, projections=[256, mel_dim])
@@ -297,7 +308,10 @@ class Tacotron(nn.Module):
 
         inputs = self.embedding(inputs)
         # (B, T', in_dim)
+        #import pdb
+        #pdb.set_trace()
         encoder_outputs = self.encoder(inputs, input_lengths)
+        prosody_embedding = self.treeencoder(inputs, input_lengths)
 
         if self.use_memory_mask:
             memory_lengths = input_lengths
@@ -305,7 +319,7 @@ class Tacotron(nn.Module):
             memory_lengths = None
         # (B, T', mel_dim*r)
         mel_outputs, alignments = self.decoder(
-            encoder_outputs, targets, memory_lengths=memory_lengths)
+            encoder_outputs, prosody_embedding, targets, memory_lengths=memory_lengths)
 
         # Post net processing below
 
