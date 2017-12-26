@@ -151,7 +151,7 @@ class TreeEncoder(nn.Module):
     def __init__(self, in_dim):
         super(TreeEncoder, self).__init__()
         self.prenet = Prenet(in_dim, sizes=[256, 128])
-        self.treelstm = BinaryTreeLSTM(word_dim=128, hidden_dim=16, use_leaf_rnn=False, intra_attention=False, gumbel_temperature=1, bidirectional=False)
+        self.treelstm = BinaryTreeLSTM(word_dim=128, hidden_dim=16, use_leaf_rnn=True, intra_attention=False, gumbel_temperature=1, bidirectional=True)
 
     def forward(self, inputs, input_lengths=None):
         inputs = self.prenet(inputs)
@@ -170,7 +170,7 @@ class Decoder(nn.Module):
             BahdanauAttention(256)
         )
         self.memory_layer = nn.Linear(256, 256, bias=False)
-        self.project_to_decoder_in = nn.Linear(528, 256) #256 + 256 + 128
+        self.project_to_decoder_in = nn.Linear(544, 256) #256 + 256 + 128
 
         self.decoder_rnns = nn.ModuleList(
             [nn.GRUCell(256, 256) for _ in range(2)])

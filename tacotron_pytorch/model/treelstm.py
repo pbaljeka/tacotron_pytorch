@@ -157,12 +157,12 @@ class BinaryTreeLSTM(nn.Module):
                 c_prev = c
             hs = torch.stack(hs, dim=1)
             cs = torch.stack(cs, dim=1)
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
             if self.bidirectional:
                 hs_bw = []
                 cs_bw = []
                 h_bw_prev = c_bw_prev = zero_state
-                lengths_list = list(length.data)
+                lengths_list = list(length)
                 input_bw = basic.reverse_padded_sequence(
                     inputs=input, lengths=lengths_list, batch_first=True)
                 for i in range(max_length):
