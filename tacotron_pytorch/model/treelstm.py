@@ -141,7 +141,6 @@ class BinaryTreeLSTM(nn.Module):
         length_mask = basic.sequence_mask(sequence_length=length,
                                           max_length=max_depth)
         select_masks = []
-
         if self.use_leaf_rnn:
             hs = []
             cs = []
@@ -158,7 +157,7 @@ class BinaryTreeLSTM(nn.Module):
                 c_prev = c
             hs = torch.stack(hs, dim=1)
             cs = torch.stack(cs, dim=1)
-
+            import pdb; pdb.set_trace()
             if self.bidirectional:
                 hs_bw = []
                 cs_bw = []
@@ -203,6 +202,7 @@ class BinaryTreeLSTM(nn.Module):
                 select_masks.append(select_mask)
                 if self.intra_attention:
                     nodes.append(selected_h)
+            #done_mask = length_mask[:, i+1].float().cuda()
             done_mask = length_mask[:, i+1]
             state = self.update_state(old_state=state, new_state=new_state,
                                       done_mask=done_mask)

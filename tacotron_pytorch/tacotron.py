@@ -151,7 +151,7 @@ class TreeEncoder(nn.Module):
     def __init__(self, in_dim):
         super(TreeEncoder, self).__init__()
         self.prenet = Prenet(in_dim, sizes=[256, 128])
-        self.treelstm = BinaryTreeLSTM(word_dim=128, hidden_dim=16, use_leaf_rnn=True, intra_attention=False, gumbel_temperature=1, bidirectional=True)
+        self.treelstm = BinaryTreeLSTM(word_dim=128, hidden_dim=16, use_leaf_rnn=False, intra_attention=False, gumbel_temperature=1, bidirectional=False)
 
     def forward(self, inputs, input_lengths=None):
         inputs = self.prenet(inputs)
@@ -170,7 +170,7 @@ class Decoder(nn.Module):
             BahdanauAttention(256)
         )
         self.memory_layer = nn.Linear(256, 256, bias=False)
-        self.project_to_decoder_in = nn.Linear(640, 256) #256 + 256 + 128
+        self.project_to_decoder_in = nn.Linear(528, 256) #256 + 256 + 128
 
         self.decoder_rnns = nn.ModuleList(
             [nn.GRUCell(256, 256) for _ in range(2)])
@@ -242,10 +242,10 @@ class Decoder(nn.Module):
             attention_rnn_hidden, current_attention, alignment = self.attention_rnn(
                 current_input, current_attention, attention_rnn_hidden,
                 encoder_outputs, processed_memory=processed_memory, mask=mask)
-
+            #import pdb; pdb.set_trace()
             # Concat RNN output and attention context vector
             decoder_input = self.project_to_decoder_in(
-                torch.cat((attention_rnn_hidden, current_attention, prosody_embedding), -1))
+                torch.cat((attention_rnn_hidden, current_attention, prosody_embedding[0]), -1))
 
             # Pass through the decoder RNNs
             for idx in range(len(self.decoder_rnns)):
@@ -308,10 +308,12 @@ class Tacotron(nn.Module):
 
         inputs = self.embedding(inputs)
         # (B, T', in_dim)
-        #import pdb
-        #pdb.set_trace()
+        i_lengths=torch.from_numpy(input_lengths).cuda()
+        
         encoder_outputs = self.encoder(inputs, input_lengths)
-        prosody_embedding = self.treeencoder(inputs, input_lengths)
+       # import pdb
+       # pdb.set_trace()
+        prosody_embedding = self.treeencoder(inputs, i_lengths)
 
         if self.use_memory_mask:
             memory_lengths = input_lengths

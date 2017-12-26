@@ -88,7 +88,9 @@ def convert_to_one_hot(indices, num_classes):
 def masked_softmax(logits, mask=None):
     eps = 1e-20
     probs = functional.softmax(logits)
+    #import pdb; pdb.set_trace()
     if mask is not None:
+        #mask = mask.float().cuda()
         mask = mask.float()
         probs = probs * mask + eps
         probs = probs / probs.sum(1, keepdim=True)
@@ -138,6 +140,8 @@ def st_gumbel_softmax(logits, temperature=1.0, mask=None):
 def sequence_mask(sequence_length, max_length=None):
     if max_length is None:
         max_length = sequence_length.data.max()
+    #import pdb
+    #pdb.set_trace()
     batch_size = sequence_length.size(0)
     seq_range = torch.arange(0, max_length).long()
     seq_range_expand = seq_range.unsqueeze(0).expand(batch_size, max_length)
@@ -145,6 +149,7 @@ def sequence_mask(sequence_length, max_length=None):
     if sequence_length.is_cuda:
         seq_range_expand = seq_range_expand.cuda()
     seq_length_expand = sequence_length.unsqueeze(1).expand_as(seq_range_expand)
+    seq_length_expand = Variable(seq_length_expand)
     return seq_range_expand < seq_length_expand
 
 
