@@ -303,17 +303,17 @@ class Tacotron(nn.Module):
         self.postnet = CBHG(mel_dim, K=8, projections=[256, mel_dim])
         self.last_linear = nn.Linear(mel_dim * 2, linear_dim)
 
-    def forward(self, inputs, targets=None, input_lengths=None):
+    def forward(self, inputs, targets=None, input_lengths=None, phone_lengths=None):
         B = inputs.size(0)
 
         inputs = self.embedding(inputs)
         # (B, T', in_dim)
-        i_lengths=torch.from_numpy(input_lengths).cuda()
+        phone_lengths=phone_lengths.cuda()
         
         encoder_outputs = self.encoder(inputs, input_lengths)
        # import pdb
        # pdb.set_trace()
-        prosody_embedding = self.treeencoder(inputs, i_lengths)
+        prosody_embedding = self.treeencoder(inputs, phone_lengths)
 
         if self.use_memory_mask:
             memory_lengths = input_lengths

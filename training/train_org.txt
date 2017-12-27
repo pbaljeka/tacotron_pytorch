@@ -1,0 +1,100 @@
+ljspeech-spec-00002.npy|ljspeech-mel-00002.npy|152|in being comparatively modern.
+ljspeech-spec-00003.npy|ljspeech-mel-00003.npy|774|For although the Chinese took impressions from wood blocks engraved in relief for centuries before the woodcutters of the Netherlands, by a similar process
+ljspeech-spec-00004.npy|ljspeech-mel-00004.npy|412|produced the block books, which were the immediate predecessors of the true printed book,
+ljspeech-spec-00005.npy|ljspeech-mel-00005.npy|649|the invention of movable metal letters in the middle of the fifteenth century may justly be considered as the invention of the art of printing.
+ljspeech-spec-00007.npy|ljspeech-mel-00007.npy|672|the earliest book printed with movable types, the Gutenberg, or "forty-two line Bible" of about fourteen fifty-five,
+ljspeech-spec-00008.npy|ljspeech-mel-00008.npy|143|has never been surpassed.
+ljspeech-spec-00009.npy|ljspeech-mel-00009.npy|605|Printing, then, for our purpose, may be considered as the art of making books by means of movable types.
+ljspeech-spec-00011.npy|ljspeech-mel-00011.npy|361|it is of the first importance that the letter used should be fine in form;
+ljspeech-spec-00012.npy|ljspeech-mel-00012.npy|660|especially as no more time is occupied, or cost incurred, in casting, setting, or printing beautiful letters
+ljspeech-spec-00014.npy|ljspeech-mel-00014.npy|796|And it was a matter of course that in the Middle Ages, when the craftsmen took care that beautiful form should always be a part of their productions whatever they were,
+ljspeech-spec-00016.npy|ljspeech-mel-00016.npy|422|The Middle Ages brought calligraphy to perfection, and it was natural therefore
+ljspeech-spec-00017.npy|ljspeech-mel-00017.npy|562|that the forms of printed letters should follow more or less closely those of the written character, and they followed them very closely.
+ljspeech-spec-00018.npy|ljspeech-mel-00018.npy|599|The first books were printed in black letter, i.e. the letter which was a Gothic development of the ancient Roman character,
+ljspeech-spec-00019.npy|ljspeech-mel-00019.npy|514|and which developed more completely and satisfactorily on the side of the "lower-case" than the capital letters;
+ljspeech-spec-00020.npy|ljspeech-mel-00020.npy|374|the "lower-case" being in fact invented in the early Middle Ages.
+ljspeech-spec-00021.npy|ljspeech-mel-00021.npy|689|The earliest book printed with movable type, the aforesaid Gutenberg Bible, is printed in letters which are an exact imitation
+ljspeech-spec-00023.npy|ljspeech-mel-00023.npy|676|and was in fact the kind of letter used in the many splendid missals, psalters, etc., produced by printing in the fifteenth century.
+ljspeech-spec-00024.npy|ljspeech-mel-00024.npy|629|But the first Bible actually dated (which also was printed at Maintz by Peter Schoeffer in the year fourteen sixty-two)
+ljspeech-spec-00025.npy|ljspeech-mel-00025.npy|710|imitates a much freer hand, simpler, rounder, and less spiky, and therefore far pleasanter and easier to read.
+ljspeech-spec-00028.npy|ljspeech-mel-00028.npy|475|but by printers in Strasburg, Basle, Paris, Lubeck, and other cities.
+ljspeech-spec-00029.npy|ljspeech-mel-00029.npy|426|But though on the whole, except in Italy, Gothic letter was most often used
+ljspeech-spec-00031.npy|ljspeech-mel-00031.npy|629|In fourteen sixty-five Sweynheim and Pannartz began printing in the monastery of Subiaco near Rome,
+ljspeech-spec-00032.npy|ljspeech-mel-00032.npy|567|and used an exceedingly beautiful type, which is indeed to look at a transition between Gothic and Roman,
+ljspeech-spec-00033.npy|ljspeech-mel-00033.npy|551|but which must certainly have come from the study of the twelfth or even the eleventh century MSS.
+ljspeech-spec-00034.npy|ljspeech-mel-00034.npy|727|They printed very few books in this type, three only; but in their very first books in Rome, beginning with the year fourteen sixty-eight,
+ljspeech-spec-00035.npy|ljspeech-mel-00035.npy|405|they discarded this for a more completely Roman and far less beautiful letter.
+ljspeech-spec-00036.npy|ljspeech-mel-00036.npy|587|But about the same year Mentelin at Strasburg began to print in a type which is distinctly Roman;
+ljspeech-spec-00037.npy|ljspeech-mel-00037.npy|341|and the next year Gunther Zeiner at Augsburg followed suit;
+ljspeech-spec-00039.npy|ljspeech-mel-00039.npy|301|The Roman type of all these printers is similar in character,
+ljspeech-spec-00040.npy|ljspeech-mel-00040.npy|608|and is very simple and legible, and unaffectedly designed for use; but it is by no means without beauty.
+ljspeech-spec-00041.npy|ljspeech-mel-00041.npy|397|It must be said that it is in no way like the transition type of Subiaco,
+ljspeech-spec-00042.npy|ljspeech-mel-00042.npy|534|and though more Roman than that, yet scarcely more like the complete Roman type of the earliest printers of Rome.
+ljspeech-spec-00046.npy|ljspeech-mel-00046.npy|433|their type is on the lines of the German and French rather than of the Roman printers.
+ljspeech-spec-00047.npy|ljspeech-mel-00047.npy|475|Of Jenson it must be said that he carried the development of Roman type as far as it can go:
+ljspeech-spec-00050.npy|ljspeech-mel-00050.npy|583|and though the famous family of Aldus restored its technical excellence, rejecting battered letters,
+ljspeech-spec-00051.npy|ljspeech-mel-00051.npy|389|and paying great attention to the "press work" or actual process of printing,
+ljspeech-spec-00052.npy|ljspeech-mel-00052.npy|430|yet their type is artistically on a much lower level than Jenson's, and in fact
+ljspeech-spec-00053.npy|ljspeech-mel-00053.npy|367|they must be considered to have ended the age of fine printing in Italy.
+ljspeech-spec-00054.npy|ljspeech-mel-00054.npy|348|Jenson, however, had many contemporaries who used beautiful type,
+ljspeech-spec-00055.npy|ljspeech-mel-00055.npy|689|some of which -- as, e.g., that of Jacobus Rubeus or Jacques le Rouge -- is scarcely distinguishable from his.
+ljspeech-spec-00056.npy|ljspeech-mel-00056.npy|440|It was these great Venetian printers, together with their brethren of Rome, Milan,
+ljspeech-spec-00058.npy|ljspeech-mel-00058.npy|591|and are worthy representatives of the eager enthusiasm for the revived learning of that epoch. By far,
+ljspeech-spec-00059.npy|ljspeech-mel-00059.npy|726|the greater part of these Italian printers, it should be mentioned, were Germans or Frenchmen, working under the influence of Italian opinion and aims.
+ljspeech-spec-00060.npy|ljspeech-mel-00060.npy|543|It must be understood that through the whole of the fifteenth and the first quarter of the sixteenth centuries
+ljspeech-spec-00061.npy|ljspeech-mel-00061.npy|281|the Roman letter was used side by side with the Gothic.
+ljspeech-spec-00062.npy|ljspeech-mel-00062.npy|417|Even in Italy most of the theological and law books were printed in Gothic letter,
+ljspeech-spec-00064.npy|ljspeech-mel-00064.npy|471|many of whose types, indeed, like that of the Subiaco works, are of a transitional character.
+ljspeech-spec-00065.npy|ljspeech-mel-00065.npy|567|This was notably the case with the early works printed at Ulm, and in a somewhat lesser degree at Augsburg.
+ljspeech-spec-00066.npy|ljspeech-mel-00066.npy|767|In fact Gunther Zeiner's first type (afterwards used by Schussler) is remarkably like the type of the before-mentioned Subiaco books.
+ljspeech-spec-00067.npy|ljspeech-mel-00067.npy|558|In the Low Countries and Cologne, which were very fertile of printed books, Gothic was the favorite.
+ljspeech-spec-00070.npy|ljspeech-mel-00070.npy|623|and was used there with very little variation all through the sixteenth and seventeenth centuries, and indeed into the eighteenth.
+ljspeech-spec-00071.npy|ljspeech-mel-00071.npy|590|Most of Caxton's own types are of an earlier character, though they also much resemble Flemish or Cologne letter.
+ljspeech-spec-00073.npy|ljspeech-mel-00073.npy|568|went on apace; and by the end of the sixteenth century there was no really beautiful printing done:
+ljspeech-spec-00074.npy|ljspeech-mel-00074.npy|521|the best, mostly French or Low-Country, was neat and clear, but without any distinction;
+ljspeech-spec-00075.npy|ljspeech-mel-00075.npy|545|the worst, which perhaps was the English, was a terrible falling-off from the work of the earlier presses;
+ljspeech-spec-00077.npy|ljspeech-mel-00077.npy|750|In England about this time, an attempt was made (notably by Caslon, who started business in London as a type-founder in seventeen twenty)
+ljspeech-spec-00078.npy|ljspeech-mel-00078.npy|157|to improve the letter in form.
+ljspeech-spec-00080.npy|ljspeech-mel-00080.npy|432|he seems to have taken the letter of the Elzevirs of the seventeenth century for his model:
+ljspeech-spec-00083.npy|ljspeech-mel-00083.npy|400|The seventeenth century founts were bad rather negatively than positively.
+ljspeech-spec-00084.npy|ljspeech-mel-00084.npy|337|But for the beauty of the earlier work they might have seemed tolerable.
+ljspeech-spec-00085.npy|ljspeech-mel-00085.npy|666|It was reserved for the founders of the later eighteenth century to produce letters which are positively ugly, and which, it may be added,
+ljspeech-spec-00086.npy|ljspeech-mel-00086.npy|543|are dazzling and unpleasant to the eye owing to the clumsy thickening and vulgar thinning of the lines:
+ljspeech-spec-00087.npy|ljspeech-mel-00087.npy|661|for the seventeenth-century letters are at least pure and simple in line. The Italian, Bodoni, and the Frenchman, Didot,
+ljspeech-spec-00088.npy|ljspeech-mel-00088.npy|700|were the leaders in this luckless change, though our own Baskerville, who was at work some years before them, went much on the same lines;
+ljspeech-spec-00089.npy|ljspeech-mel-00089.npy|694|but his letters, though uninteresting and poor, are not nearly so gross and vulgar as those of either the Italian or the Frenchman.
+ljspeech-spec-00090.npy|ljspeech-mel-00090.npy|262|With this change the art of printing touched bottom,
+ljspeech-spec-00091.npy|ljspeech-mel-00091.npy|533|so far as fine printing is concerned, though paper did not get to its worst till about eighteen forty.
+ljspeech-spec-00092.npy|ljspeech-mel-00092.npy|639|The Chiswick press in eighteen forty-four revived Caslon's founts, printing for Messrs. Longman the Diary of Lady Willoughby.
+ljspeech-spec-00093.npy|ljspeech-mel-00093.npy|570|This experiment was so far successful that about eighteen fifty Messrs. Miller and Richard of Edinburgh
+ljspeech-spec-00094.npy|ljspeech-mel-00094.npy|345|were induced to cut punches for a series of "old style" letters.
+ljspeech-spec-00096.npy|ljspeech-mel-00096.npy|774|have now come into general use and are obviously a great improvement on the ordinary "modern style" in use in England, which is in fact the Bodoni type
+ljspeech-spec-00098.npy|ljspeech-mel-00098.npy|373|and the whole effect is a little too gray, owing to the thinness of the letters.
+ljspeech-spec-00099.npy|ljspeech-mel-00099.npy|643|It must be remembered, however, that most modern printing is done by machinery on soft paper, and not by the hand press,
+ljspeech-spec-00100.npy|ljspeech-mel-00100.npy|687|and these somewhat wiry letters are suitable for the machine process, which would not do justice to letters of more generous design.
+ljspeech-spec-00101.npy|ljspeech-mel-00101.npy|595|It is discouraging to note that the improvement of the last fifty years is almost wholly confined to Great Britain.
+ljspeech-spec-00102.npy|ljspeech-mel-00102.npy|413|Here and there a book is printed in France or Germany with some pretension to good taste,
+ljspeech-spec-00103.npy|ljspeech-mel-00103.npy|430|but the general revival of the old forms has made no way in those countries.
+ljspeech-spec-00104.npy|ljspeech-mel-00104.npy|191|Italy is contentedly stagnant.
+ljspeech-spec-00105.npy|ljspeech-mel-00105.npy|684|America has produced a good many showy books, the typography, paper, and illustrations of which are, however, all wrong,
+ljspeech-spec-00108.npy|ljspeech-mel-00108.npy|464|it is obvious that legibility is the first thing to be aimed at in the forms of the letters;
+ljspeech-spec-00109.npy|ljspeech-mel-00109.npy|728|this is best furthered by the avoidance of irrational swellings and spiky projections, and by the using of careful purity of line.
+ljspeech-spec-00111.npy|ljspeech-mel-00111.npy|556|the ends of many of the letters such as the t and e are hooked up in a vulgar and meaningless way,
+ljspeech-spec-00112.npy|ljspeech-mel-00112.npy|323|instead of ending in the sharp and clear stroke of Jenson's letters;
+ljspeech-spec-00114.npy|ljspeech-mel-00114.npy|341|an ugly pear-shaped swelling defacing the form of the letter:
+ljspeech-spec-00115.npy|ljspeech-mel-00115.npy|665|in short, it happens to this craft, as to others, that the utilitarian practice, though it professes to avoid ornament,
+ljspeech-spec-00116.npy|ljspeech-mel-00116.npy|720|still clings to a foolish, because misunderstood conventionality, deduced from what was once ornament, and is by no means useful;
+ljspeech-spec-00117.npy|ljspeech-mel-00117.npy|532|which title can only be claimed by artistic practice, whether the art in it be conscious or unconscious.
+ljspeech-spec-00118.npy|ljspeech-mel-00118.npy|420|In no characters is the contrast between the ugly and vulgar illegibility of the modern type
+ljspeech-spec-00119.npy|ljspeech-mel-00119.npy|468|and the elegance and legibility of the ancient more striking than in the Arabic numerals.
+ljspeech-spec-00121.npy|ljspeech-mel-00121.npy|511|in reading the modern figures the eyes must be strained before the reader can have any reasonable assurance
+ljspeech-spec-00122.npy|ljspeech-mel-00122.npy|523|that he has a five, an eight, or a three before him, unless the press work is of the best:
+ljspeech-spec-00124.npy|ljspeech-mel-00124.npy|673|One of the differences between the fine type and the utilitarian must probably be put down to a misapprehension of a commercial necessity:
+ljspeech-spec-00125.npy|ljspeech-mel-00125.npy|215|this is the narrowing of the modern letters.
+ljspeech-spec-00126.npy|ljspeech-mel-00126.npy|257|Most of Jenson's letters are designed within a square,
+ljspeech-spec-00128.npy|ljspeech-mel-00128.npy|799|it is not a real gain, for the modern printer throws the gain away by putting inordinately wide spaces between his lines, which, probably,
+ljspeech-spec-00130.npy|ljspeech-mel-00130.npy|483|Commercialism again compels the use of type too small in size to be comfortable reading:
+ljspeech-spec-00131.npy|ljspeech-mel-00131.npy|520|the size known as "Long primer" ought to be the smallest size used in a book meant to be read.
+ljspeech-spec-00132.npy|ljspeech-mel-00132.npy|653|Here, again, if the practice of "leading" were retrenched larger type could be used without enhancing the price of a book.
+ljspeech-spec-00134.npy|ljspeech-mel-00134.npy|443|In good printing the spaces between the words should be as near as possible equal
+ljspeech-spec-00135.npy|ljspeech-mel-00135.npy|345|it is impossible that they should be quite equal except in lines of poetry
