@@ -264,8 +264,11 @@ def train(model, data_loader, optimizer,
             x, mel, y, phone = Variable(x), Variable(mel), Variable(y), Variable(phone)
             if use_cuda:
                 x, mel, y, phone = x.cuda(), mel.cuda(), y.cuda(), phone.cuda()
-            mel_outputs, linear_outputs, attn = model(
+            mel_outputs, linear_outputs, attn, prosody_outputs = model(
                 x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths)
+
+            #mel_outputs, linear_outputs, attn = model(
+            #    x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths)
 
             # Loss
             mel_loss = criterion(mel_outputs, mel)
@@ -273,7 +276,8 @@ def train(model, data_loader, optimizer,
             linear_loss = 0.5 * criterion(linear_outputs, y) \
                 + 0.5 * criterion(linear_outputs[:, :, :n_priority_freq],
                                   y[:, :, :n_priority_freq])
-            loss = mel_loss + linear_loss
+            F0_loss = criterion(prosody_outputs, mel) 
+            loss = mel_loss + linear_loss + F0_loss
 
             if global_step > 0 and global_step % checkpoint_interval == 0:
                 save_states(
@@ -291,6 +295,7 @@ def train(model, data_loader, optimizer,
             # Logs
             log_value("loss", float(loss.data[0]), global_step)
             log_value("mel loss", float(mel_loss.data[0]), global_step)
+            log_value("F0 loss", float(F0_loss.data[0]), global_step)
             log_value("linear loss", float(linear_loss.data[0]), global_step)
             log_value("gradient norm", grad_norm, global_step)
             log_value("learning rate", current_lr, global_step)

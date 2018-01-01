@@ -157,7 +157,52 @@ class TreeEncoder(nn.Module):
         inputs = self.prenet(inputs)
         return self.treelstm(inputs, input_lengths)
 
-
+class RNNDecoder(nn.Module):
+    def __init__(self, in_dim, output_dim, hidden_dim = 128):
+        super(RNNDecoder, self).__init__()
+        self.in_dim = in_dim
+        self.hidden_dim = hidden_dim
+        self.output_dim = output_dim
+        self.input_projection = nn.Linear(in_dim, hidden_dim)
+        self.projection = nn.Linear(output_dim, hidden_dim)
+        self.gru = nn.GRUCell(hidden_dim, hidden_dim)
+        self.linear = nn.Linear(hidden_dim, output_dim)
+        self.max_Decoder_steps = 200
+    def forward(self, inputs, targets=None):
+        outputs = [] 
+        t=0;batch_size = inputs.size(0) 
+        is_train = targets is not None
+        targets = targets.transpose(0,1)
+        if is_train: 
+            T_decoder = targets.size(0)
+        hidden = Variable(torch.zeros(batch_size, self.hidden_dim)).cuda()
+        #import pdb; pdb.set_trace()
+        current_input = self.input_projection(inputs)
+        while True:
+            if t > 0:
+                current_input = outputs[-1] if is_train else targets[t-1]
+            
+                current_input = self.projection(current_input)
+            hidden = self.gru(current_input, hidden)
+            current_input = hidden + current_input
+            output = self.linear(current_input)
+            outputs += [output]
+            t += 1
+            if is_train:
+                if  t >= T_decoder:
+                    break
+            else:
+                if t > 1 and is_end_of_frames(output):
+                    break
+                elif t > self.max_decoder_steps:
+                    print("Warning! doesn't seem to converge")
+                    break
+        if is_train:
+            print(len(outputs), T_decoder)
+            assert len(outputs) == T_decoder
+        outputs = torch.stack(outputs).transpose(0,1).contiguous() 
+        return outputs
+    
 class Decoder(nn.Module):
     def __init__(self, in_dim, r):
         super(Decoder, self).__init__()
@@ -231,6 +276,7 @@ class Decoder(nn.Module):
         alignments = []
 
         t = 0
+        #import pdb; pdb.set_trace()
         current_input = initial_input
         while True:
             if t > 0:
@@ -298,6 +344,7 @@ class Tacotron(nn.Module):
         self.embedding.weight.data.normal_(0, 0.3)
         self.encoder = Encoder(embedding_dim)
         self.treeencoder = TreeEncoder(embedding_dim)
+        self.rnndecoder = RNNDecoder(32, mel_dim)
         self.decoder = Decoder(mel_dim, r)
 
         self.postnet = CBHG(mel_dim, K=8, projections=[256, mel_dim])
@@ -322,7 +369,7 @@ class Tacotron(nn.Module):
         # (B, T', mel_dim*r)
         mel_outputs, alignments = self.decoder(
             encoder_outputs, prosody_embedding, targets, memory_lengths=memory_lengths)
-
+        prosody_outputs = self.rnndecoder(prosody_embedding[0], targets)
         # Post net processing below
 
         # Reshape
@@ -332,4 +379,4 @@ class Tacotron(nn.Module):
         linear_outputs = self.postnet(mel_outputs)
         linear_outputs = self.last_linear(linear_outputs)
 
-        return mel_outputs, linear_outputs, alignments
+        return mel_outputs, linear_outputs, alignments, prosody_outputs
