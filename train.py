@@ -120,6 +120,14 @@ class MelSpecDataSource(_NPYDataSource):
     def __init__(self):
         super(MelSpecDataSource, self).__init__(1)
 
+class F0DataSource(_NPYDataSource):
+    def __init__(self):
+        super(F0DataSource, self).__init__(5)
+
+class EmbeddingDataSource(_NPYDataSource):
+    def __init__(self):
+        super(EmbeddingDataSource, self).__init__(4)
+
 
 class LinearSpecDataSource(_NPYDataSource):
     def __init__(self):
@@ -127,27 +135,28 @@ class LinearSpecDataSource(_NPYDataSource):
 
 
 class PyTorchDataset(object):
-    def __init__(self, X, Mel, Y, Phones):
+    def __init__(self, X, Mel, Y, Phones, F0):
         self.X = X
         self.Mel = Mel
         self.Y = Y
         self.Phones = Phones
+        self.F0 = F0
 
     def __getitem__(self, idx):
-        return self.X[idx], self.Mel[idx], self.Y[idx], self.Phones[idx]
+        return self.X[idx], self.Mel[idx], self.Y[idx], self.Phones[idx], self.F0[idx]
 
     def __len__(self):
         return len(self.X)
 
 
 def collate_fn(batch):
-    """Create batch"""
+    """Create batch-one hot phone embedding with framewise F0"""
     r = hparams.outputs_per_step
     input_lengths = [len(x[0]) for x in batch]
     max_input_len = np.max(input_lengths)
     # Add single zeros frame at least, so plus 1
     max_target_len = np.max([len(x[1]) for x in batch]) + 1
-    
+    max_f0_len = np.max([len(x[4]) for x in batch]) + 1 
     phone_lengths = [len(x[3]) for x in batch]
     max_phone_len = np.max(phone_lengths)
     if max_target_len % r != 0:
@@ -170,9 +179,10 @@ def collate_fn(batch):
     phone_batch = torch.LongTensor(d)
 
     phone_lengths = torch.LongTensor(phone_lengths)
+    e = np.array([_pad_2d(x[4], max_f0_len) for x in batch], dtype=np.int)
+    f0_batch = torch.FloatTensor(e)
 
-
-    return x_batch, input_lengths, mel_batch, y_batch, phone_batch, phone_lengths
+    return x_batch, input_lengths, mel_batch, y_batch, phone_batch, phone_lengths, f0_batch
 
 
 def save_alignment(path, attn):
@@ -245,7 +255,7 @@ def train(model, data_loader, optimizer,
     global global_step, global_epoch
     while global_epoch < nepochs:
         running_loss = 0.
-        for step, (x, input_lengths, mel, y, phone, phone_lengths) in tqdm(enumerate(data_loader)):
+        for step, (x, input_lengths, mel, y, phone, phone_lengths, f0) in tqdm(enumerate(data_loader)):
             # Decay learning rate
             current_lr = _learning_rate_decay(init_lr, global_step)
             for param_group in optimizer.param_groups:
@@ -258,14 +268,14 @@ def train(model, data_loader, optimizer,
                 input_lengths.view(-1), dim=0, descending=True)
             sorted_lengths = sorted_lengths.long().numpy()
           
-            x, mel, y, phone, phone_lengths = x[indices], mel[indices], y[indices], phone[indices], phone_lengths[indices]
+            x, mel, y, phone, phone_lengths, f0 = x[indices], mel[indices], y[indices], phone[indices], phone_lengths[indices], f0[indices]
 
             # Feed data
-            x, mel, y, phone = Variable(x), Variable(mel), Variable(y), Variable(phone)
+            x, mel, y, phone, f0 = Variable(x), Variable(mel), Variable(y), Variable(phone), Variable(f0)
             if use_cuda:
-                x, mel, y, phone = x.cuda(), mel.cuda(), y.cuda(), phone.cuda()
+                x, mel, y, phone, f0 = x.cuda(), mel.cuda(), y.cuda(), phone.cuda(), f0.cuda()
             mel_outputs, linear_outputs, attn, prosody_outputs = model(
-                x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths)
+                x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths, f0=f0)
 
             #mel_outputs, linear_outputs, attn = model(
             #    x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths)
@@ -276,7 +286,7 @@ def train(model, data_loader, optimizer,
             linear_loss = 0.5 * criterion(linear_outputs, y) \
                 + 0.5 * criterion(linear_outputs[:, :, :n_priority_freq],
                                   y[:, :, :n_priority_freq])
-            F0_loss = criterion(prosody_outputs, mel) 
+            F0_loss = criterion(prosody_outputs, f0) 
             loss = mel_loss + linear_loss + F0_loss
 
             if global_step > 0 and global_step % checkpoint_interval == 0:
@@ -341,8 +351,9 @@ if __name__ == "__main__":
     Mel = FileSourceDataset(MelSpecDataSource())
     Y = FileSourceDataset(LinearSpecDataSource())
     Phones = FileSourceDataset(PhoneDataSource(4))
+    F0 = FileSourceDataset(F0DataSource())
     # Dataset and Dataloader setup
-    dataset = PyTorchDataset(X, Mel, Y, Phones)
+    dataset = PyTorchDataset(X, Mel, Y, Phones, F0)
     data_loader = data_utils.DataLoader(
         dataset, batch_size=hparams.batch_size,
         num_workers=hparams.num_workers, shuffle=True,
