@@ -121,8 +121,8 @@ class MelSpecDataSource(_NPYDataSource):
         super(MelSpecDataSource, self).__init__(1)
 
 class F0DataSource(_NPYDataSource):
-    def __init__(self):
-        super(F0DataSource, self).__init__(5)
+    def __init__(self,col_num):
+        super(F0DataSource, self).__init__(col_num)
 
 class EmbeddingDataSource(_NPYDataSource):
     def __init__(self):
@@ -351,7 +351,12 @@ if __name__ == "__main__":
     Mel = FileSourceDataset(MelSpecDataSource())
     Y = FileSourceDataset(LinearSpecDataSource())
     Phones = FileSourceDataset(PhoneDataSource(4))
-    F0 = FileSourceDataset(F0DataSource())
+    if hparams.f0_type == "framewise":
+        col_num = 5; hparams.f0_dim =1
+    else:
+        col_num = 6; hparams.f0_dim=10
+
+    F0 = FileSourceDataset(F0DataSource(col_num))
     # Dataset and Dataloader setup
     dataset = PyTorchDataset(X, Mel, Y, Phones, F0)
     data_loader = data_utils.DataLoader(
@@ -364,6 +369,7 @@ if __name__ == "__main__":
                      embedding_dim=256,
                      mel_dim=hparams.num_mels,
                      linear_dim=hparams.num_freq,
+                     f0_dim=hparams.f0_dim,
                      r=hparams.outputs_per_step,
                      padding_idx=hparams.padding_idx,
                      use_memory_mask=hparams.use_memory_mask,
