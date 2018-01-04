@@ -5,6 +5,7 @@ usage: train.py [options]
 options:
     --data-root=<dir>         Directory contains preprocessed features.
     --checkpoint-dir=<dir>    Directory where to save model checkpoints [default: checkpoints].
+    --pretrained-path=<name>    Directory of pretrained model [default: checkpoints].
     --checkpoint-path=<name>  Restore model from checkpoint path if given.
     --hparams=<parmas>        Hyper parameters [default: ].
     -h, --help                Show this help message and exit
@@ -16,7 +17,7 @@ import sys
 from os.path import dirname, join
 tacotron_lib_dir = join(dirname(__file__), "lib", "tacotron")
 sys.path.append(tacotron_lib_dir)
-from text import text_to_sequence, symbols, prosody_symbols, phone_to_sequence
+from text import text_to_sequence, symbols
 from util import audio
 from util.plot import plot_alignment
 from tqdm import tqdm, trange
@@ -68,36 +69,19 @@ def _pad_2d(x, max_len):
 
 
 class TextDataSource(FileDataSource):
-    def __init__(self, col):
-        self.col = col
+    def __init__(self):
         self._cleaner_names = [x.strip() for x in hparams.cleaners.split(',')]
 
     def collect_files(self):
         meta = join(DATA_ROOT, "train.txt")
         with open(meta, "rb") as f:
             lines = f.readlines()
-        lines = list(map(lambda l: l.decode("utf-8").split("|")[self.col], lines))
+        lines = list(map(lambda l: l.decode("utf-8").split("|")[-1], lines))
         return lines
 
     def collect_features(self, text):
         return np.asarray(text_to_sequence(text, self._cleaner_names),
                           dtype=np.int32)
-
-class PhoneDataSource(FileDataSource):
-    def __init__(self, col):
-        self.col = col
-        self._cleaner_names = [x.strip() for x in hparams.cleaners.split(',')]
-
-
-    def collect_files(self):
-        meta = join(DATA_ROOT, "train.txt")
-        with open(meta, "rb") as f:
-            lines = f.readlines()
-        lines = list(map(lambda l: l.decode("utf-8").split("|")[self.col], lines))
-        return lines
-
-    def collect_features(self, text):
-        return np.asarray(phone_to_sequence(text, self._cleaner_names),dtype=np.int32)
 
 
 class _NPYDataSource(FileDataSource):
@@ -127,14 +111,13 @@ class LinearSpecDataSource(_NPYDataSource):
 
 
 class PyTorchDataset(object):
-    def __init__(self, X, Mel, Y, Phones):
+    def __init__(self, X, Mel, Y):
         self.X = X
         self.Mel = Mel
         self.Y = Y
-        self.Phones = Phones
 
     def __getitem__(self, idx):
-        return self.X[idx], self.Mel[idx], self.Y[idx], self.Phones[idx]
+        return self.X[idx], self.Mel[idx], self.Y[idx]
 
     def __len__(self):
         return len(self.X)
@@ -147,9 +130,6 @@ def collate_fn(batch):
     max_input_len = np.max(input_lengths)
     # Add single zeros frame at least, so plus 1
     max_target_len = np.max([len(x[1]) for x in batch]) + 1
-    
-    phone_lengths = [len(x[3]) for x in batch]
-    max_phone_len = np.max(phone_lengths)
     if max_target_len % r != 0:
         max_target_len += r - max_target_len % r
         assert max_target_len % r == 0
@@ -158,7 +138,7 @@ def collate_fn(batch):
     x_batch = torch.LongTensor(a)
 
     input_lengths = torch.LongTensor(input_lengths)
-      
+
     b = np.array([_pad_2d(x[1], max_target_len) for x in batch],
                  dtype=np.float32)
     mel_batch = torch.FloatTensor(b)
@@ -166,13 +146,7 @@ def collate_fn(batch):
     c = np.array([_pad_2d(x[2], max_target_len) for x in batch],
                  dtype=np.float32)
     y_batch = torch.FloatTensor(c)
-    d = np.array([_pad(x[3], max_phone_len) for x in batch], dtype=np.int)
-    phone_batch = torch.LongTensor(d)
-
-    phone_lengths = torch.LongTensor(phone_lengths)
-
-
-    return x_batch, input_lengths, mel_batch, y_batch, phone_batch, phone_lengths
+    return x_batch, input_lengths, mel_batch, y_batch
 
 
 def save_alignment(path, attn):
@@ -198,7 +172,7 @@ def _learning_rate_decay(init_lr, global_step):
 
 
 def save_states(global_step, mel_outputs, linear_outputs, attn, y,
-                input_lengths, phone_lengths=None, checkpoint_dir=None):
+                input_lengths, checkpoint_dir=None):
     print("Save intermediate states at step {}".format(global_step))
 
     # idx = np.random.randint(0, len(input_lengths))
@@ -229,7 +203,10 @@ def save_states(global_step, mel_outputs, linear_outputs, attn, y,
         global_step))
     linear_output = y[idx].cpu().data.numpy()
     save_spectrogram(path, linear_output)
-
+def _transfer(pretrained_dict, model_dict):
+    pretrained_dict = {k:v for k,v in pretrained_dict.items() if k in model_dict}
+    model_dict.update(pretrained_dict)
+    return model_dict
 
 def train(model, data_loader, optimizer,
           init_lr=0.002,
@@ -245,7 +222,7 @@ def train(model, data_loader, optimizer,
     global global_step, global_epoch
     while global_epoch < nepochs:
         running_loss = 0.
-        for step, (x, input_lengths, mel, y, phone, phone_lengths) in tqdm(enumerate(data_loader)):
+        for step, (x, input_lengths, mel, y) in tqdm(enumerate(data_loader)):
             # Decay learning rate
             current_lr = _learning_rate_decay(init_lr, global_step)
             for param_group in optimizer.param_groups:
@@ -257,18 +234,15 @@ def train(model, data_loader, optimizer,
             sorted_lengths, indices = torch.sort(
                 input_lengths.view(-1), dim=0, descending=True)
             sorted_lengths = sorted_lengths.long().numpy()
-          
-            x, mel, y, phone, phone_lengths = x[indices], mel[indices], y[indices], phone[indices], phone_lengths[indices]
+
+            x, mel, y = x[indices], mel[indices], y[indices]
 
             # Feed data
-            x, mel, y, phone = Variable(x), Variable(mel), Variable(y), Variable(phone)
+            x, mel, y = Variable(x), Variable(mel), Variable(y)
             if use_cuda:
-                x, mel, y, phone = x.cuda(), mel.cuda(), y.cuda(), phone.cuda()
-            mel_outputs, linear_outputs, attn, prosody_outputs = model(
-                x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths)
-
-            #mel_outputs, linear_outputs, attn = model(
-            #    x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths)
+                x, mel, y = x.cuda(), mel.cuda(), y.cuda()
+            mel_outputs, linear_outputs, attn = model(
+                x, mel, input_lengths=sorted_lengths)
 
             # Loss
             mel_loss = criterion(mel_outputs, mel)
@@ -276,13 +250,12 @@ def train(model, data_loader, optimizer,
             linear_loss = 0.5 * criterion(linear_outputs, y) \
                 + 0.5 * criterion(linear_outputs[:, :, :n_priority_freq],
                                   y[:, :, :n_priority_freq])
-            F0_loss = criterion(prosody_outputs, mel) 
-            loss = mel_loss + linear_loss + F0_loss
+            loss = mel_loss + linear_loss
 
             if global_step > 0 and global_step % checkpoint_interval == 0:
                 save_states(
                     global_step, mel_outputs, linear_outputs, attn, y,
-                    sorted_lengths, phone_lengths, checkpoint_dir)
+                    sorted_lengths, checkpoint_dir)
                 save_checkpoint(
                     model, optimizer, global_step, checkpoint_dir, global_epoch)
 
@@ -295,7 +268,6 @@ def train(model, data_loader, optimizer,
             # Logs
             log_value("loss", float(loss.data[0]), global_step)
             log_value("mel loss", float(mel_loss.data[0]), global_step)
-            log_value("F0 loss", float(F0_loss.data[0]), global_step)
             log_value("linear loss", float(linear_loss.data[0]), global_step)
             log_value("gradient norm", grad_norm, global_step)
             log_value("learning rate", current_lr, global_step)
@@ -327,6 +299,7 @@ if __name__ == "__main__":
     print("Command line args:\n", args)
     checkpoint_dir = args["--checkpoint-dir"]
     checkpoint_path = args["--checkpoint-path"]
+    pretrained_path = args["--pretrained-path"]
     data_root = args["--data-root"]
     if data_root:
         DATA_ROOT = data_root
@@ -337,12 +310,12 @@ if __name__ == "__main__":
     os.makedirs(checkpoint_dir, exist_ok=True)
 
     # Input dataset definitions
-    X = FileSourceDataset(TextDataSource(3))
+    X = FileSourceDataset(TextDataSource())
     Mel = FileSourceDataset(MelSpecDataSource())
     Y = FileSourceDataset(LinearSpecDataSource())
-    Phones = FileSourceDataset(PhoneDataSource(4))
+
     # Dataset and Dataloader setup
-    dataset = PyTorchDataset(X, Mel, Y, Phones)
+    dataset = PyTorchDataset(X, Mel, Y)
     data_loader = data_utils.DataLoader(
         dataset, batch_size=hparams.batch_size,
         num_workers=hparams.num_workers, shuffle=True,
@@ -361,7 +334,14 @@ if __name__ == "__main__":
                            lr=hparams.initial_learning_rate, betas=(
                                hparams.adam_beta1, hparams.adam_beta2),
                            weight_decay=hparams.weight_decay)
-
+ 
+    # Load pre-trained model
+    if pretrained_path:
+        print("Load checkpoint from: {}".format(pretrained_path))
+        pretrained_model = torch.load(pretrained_path)
+        model_dict = _transfer(pretrained_model["state_dict"], model.state_dict())
+        model.load_state_dict(model_dict)
+   
     # Load checkpoint
     if checkpoint_path:
         print("Load checkpoint from: {}".format(checkpoint_path))
