@@ -126,7 +126,7 @@ class F0DataSource(_NPYDataSource):
 
 class EmbeddingDataSource(_NPYDataSource):
     def __init__(self):
-        super(EmbeddingDataSource, self).__init__(4)
+        super(EmbeddingDataSource, self).__init__(7)
 
 
 class LinearSpecDataSource(_NPYDataSource):
@@ -175,7 +175,8 @@ def collate_fn(batch):
     c = np.array([_pad_2d(x[2], max_target_len) for x in batch],
                  dtype=np.float32)
     y_batch = torch.FloatTensor(c)
-    d = np.array([_pad(x[3], max_phone_len) for x in batch], dtype=np.int)
+    #d = np.array([_pad(x[3], max_phone_len) for x in batch], dtype=np.int)
+    d = np.array([_pad_2d(x[3], max_phone_len) for x in batch], dtype=np.int)
     phone_batch = torch.LongTensor(d)
 
     phone_lengths = torch.LongTensor(phone_lengths)
@@ -350,7 +351,8 @@ if __name__ == "__main__":
     X = FileSourceDataset(TextDataSource(3))
     Mel = FileSourceDataset(MelSpecDataSource())
     Y = FileSourceDataset(LinearSpecDataSource())
-    Phones = FileSourceDataset(PhoneDataSource(4))
+    #Phones = FileSourceDataset(PhoneDataSource(4))
+    Phones = FileSourceDataset(EmbeddingDataSource())
     if hparams.f0_type == "framewise":
         col_num = 5; hparams.f0_dim =1
     else:
@@ -370,6 +372,7 @@ if __name__ == "__main__":
                      mel_dim=hparams.num_mels,
                      linear_dim=hparams.num_freq,
                      f0_dim=hparams.f0_dim,
+                     unit_dim=hparams.unit_dim,
                      r=hparams.outputs_per_step,
                      padding_idx=hparams.padding_idx,
                      use_memory_mask=hparams.use_memory_mask,
