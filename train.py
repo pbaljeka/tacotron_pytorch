@@ -125,8 +125,8 @@ class F0DataSource(_NPYDataSource):
         super(F0DataSource, self).__init__(col_num)
 
 class EmbeddingDataSource(_NPYDataSource):
-    def __init__(self):
-        super(EmbeddingDataSource, self).__init__(7)
+    def __init__(self, col):
+        super(EmbeddingDataSource, self).__init__(col)
 
 
 class LinearSpecDataSource(_NPYDataSource):
@@ -135,15 +135,15 @@ class LinearSpecDataSource(_NPYDataSource):
 
 
 class PyTorchDataset(object):
-    def __init__(self, X, Mel, Y, Phones, F0):
+    def __init__(self, X, Mel, Y, Units, F0):
         self.X = X
         self.Mel = Mel
         self.Y = Y
-        self.Phones = Phones
+        self.Units = Units
         self.F0 = F0
 
     def __getitem__(self, idx):
-        return self.X[idx], self.Mel[idx], self.Y[idx], self.Phones[idx], self.F0[idx]
+        return self.X[idx], self.Mel[idx], self.Y[idx], self.Units[idx], self.F0[idx]
 
     def __len__(self):
         return len(self.X)
@@ -157,8 +157,8 @@ def collate_fn(batch):
     # Add single zeros frame at least, so plus 1
     max_target_len = np.max([len(x[1]) for x in batch]) + 1
     max_f0_len = np.max([len(x[4]) for x in batch]) + 1 
-    phone_lengths = [len(x[3]) for x in batch]
-    max_phone_len = np.max(phone_lengths)
+    unit_lengths = [len(x[3]) for x in batch]
+    max_unit_len = np.max(unit_lengths)
     if max_target_len % r != 0:
         max_target_len += r - max_target_len % r
         assert max_target_len % r == 0
@@ -176,14 +176,13 @@ def collate_fn(batch):
                  dtype=np.float32)
     y_batch = torch.FloatTensor(c)
     #d = np.array([_pad(x[3], max_phone_len) for x in batch], dtype=np.int)
-    d = np.array([_pad_2d(x[3], max_phone_len) for x in batch], dtype=np.int)
-    phone_batch = torch.LongTensor(d)
-
-    phone_lengths = torch.LongTensor(phone_lengths)
+    d = np.array([_pad_2d(x[3], max_unit_len) for x in batch], dtype=np.int)
+    unit_batch = torch.FloatTensor(d)
+    unit_lengths = torch.LongTensor(unit_lengths)
     e = np.array([_pad_2d(x[4], max_f0_len) for x in batch], dtype=np.int)
     f0_batch = torch.FloatTensor(e)
 
-    return x_batch, input_lengths, mel_batch, y_batch, phone_batch, phone_lengths, f0_batch
+    return x_batch, input_lengths, mel_batch, y_batch, unit_batch, unit_lengths, f0_batch
 
 
 def save_alignment(path, attn):
@@ -209,7 +208,7 @@ def _learning_rate_decay(init_lr, global_step):
 
 
 def save_states(global_step, mel_outputs, linear_outputs, attn, y,
-                input_lengths, phone_lengths=None, checkpoint_dir=None):
+                input_lengths, unit_lengths=None, checkpoint_dir=None):
     print("Save intermediate states at step {}".format(global_step))
 
     # idx = np.random.randint(0, len(input_lengths))
@@ -256,7 +255,7 @@ def train(model, data_loader, optimizer,
     global global_step, global_epoch
     while global_epoch < nepochs:
         running_loss = 0.
-        for step, (x, input_lengths, mel, y, phone, phone_lengths, f0) in tqdm(enumerate(data_loader)):
+        for step, (x, input_lengths, mel, y, unit, unit_lengths, f0) in tqdm(enumerate(data_loader)):
             # Decay learning rate
             current_lr = _learning_rate_decay(init_lr, global_step)
             for param_group in optimizer.param_groups:
@@ -269,14 +268,14 @@ def train(model, data_loader, optimizer,
                 input_lengths.view(-1), dim=0, descending=True)
             sorted_lengths = sorted_lengths.long().numpy()
           
-            x, mel, y, phone, phone_lengths, f0 = x[indices], mel[indices], y[indices], phone[indices], phone_lengths[indices], f0[indices]
+            x, mel, y, unit, unit_lengths, f0 = x[indices], mel[indices], y[indices], unit[indices], unit_lengths[indices], f0[indices]
 
             # Feed data
-            x, mel, y, phone, f0 = Variable(x), Variable(mel), Variable(y), Variable(phone), Variable(f0)
+            x, mel, y, unit, f0 = Variable(x), Variable(mel), Variable(y), Variable(unit), Variable(f0)
             if use_cuda:
-                x, mel, y, phone, f0 = x.cuda(), mel.cuda(), y.cuda(), phone.cuda(), f0.cuda()
+                x, mel, y, unit, f0 = x.cuda(), mel.cuda(), y.cuda(), unit.cuda(), f0.cuda()
             mel_outputs, linear_outputs, attn, prosody_outputs = model(
-                x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths, f0=f0)
+                inputs=x, units=unit, targets=mel, input_lengths=sorted_lengths, unit_lengths=unit_lengths, f0=f0)
 
             #mel_outputs, linear_outputs, attn = model(
             #    x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths)
@@ -293,7 +292,7 @@ def train(model, data_loader, optimizer,
             if global_step > 0 and global_step % checkpoint_interval == 0:
                 save_states(
                     global_step, mel_outputs, linear_outputs, attn, y,
-                    sorted_lengths, phone_lengths, checkpoint_dir)
+                    sorted_lengths, unit_lengths, checkpoint_dir)
                 save_checkpoint(
                     model, optimizer, global_step, checkpoint_dir, global_epoch)
 
@@ -351,8 +350,17 @@ if __name__ == "__main__":
     X = FileSourceDataset(TextDataSource(3))
     Mel = FileSourceDataset(MelSpecDataSource())
     Y = FileSourceDataset(LinearSpecDataSource())
-    #Phones = FileSourceDataset(PhoneDataSource(4))
-    Phones = FileSourceDataset(EmbeddingDataSource())
+    print(hparams.unit_type)
+    if hparams.unit_type == "phone":
+        unit_col=7; hparams.unit_dim=364; hparams.unit_embeding_dim=128
+    elif hparams.unit_type == "smallphone":
+        unit_col =8; hparams.unit_dim=109; hparams.unit_embedding_dim=64
+    elif hparams.unit_type == "syl":
+        unit_col =9; hparams.unit_dim=51; hparams.unit_embedding_dim=30
+    else:
+        print("Undefined unit type")
+    print(unit_col)
+    Units = FileSourceDataset(EmbeddingDataSource(unit_col))
     if hparams.f0_type == "framewise":
         col_num = 5; hparams.f0_dim =1
     else:
@@ -360,19 +368,19 @@ if __name__ == "__main__":
 
     F0 = FileSourceDataset(F0DataSource(col_num))
     # Dataset and Dataloader setup
-    dataset = PyTorchDataset(X, Mel, Y, Phones, F0)
+    dataset = PyTorchDataset(X, Mel, Y, Units, F0)
     data_loader = data_utils.DataLoader(
         dataset, batch_size=hparams.batch_size,
         num_workers=hparams.num_workers, shuffle=True,
         collate_fn=collate_fn, pin_memory=hparams.pin_memory)
 
     # Model
-    model = Tacotron(n_vocab=len(symbols),
+    model = Tacotron(n_vocab=len(symbols), unit_dim=hparams.unit_dim,
                      embedding_dim=256,
+                     unit_embedding_dim=hparams.unit_embedding_dim,
                      mel_dim=hparams.num_mels,
                      linear_dim=hparams.num_freq,
                      f0_dim=hparams.f0_dim,
-                     unit_dim=hparams.unit_dim,
                      r=hparams.outputs_per_step,
                      padding_idx=hparams.padding_idx,
                      use_memory_mask=hparams.use_memory_mask,
