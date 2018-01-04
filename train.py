@@ -17,6 +17,8 @@ from os.path import dirname, join
 tacotron_lib_dir = join(dirname(__file__), "lib", "tacotron")
 sys.path.append(tacotron_lib_dir)
 from text import text_to_sequence, symbols, prosody_symbols, phone_to_sequence
+from text.prosody_symbols import phones, syllables
+print(len(phones))
 from util import audio
 from util.plot import plot_alignment
 from tqdm import tqdm, trange
@@ -269,13 +271,12 @@ def train(model, data_loader, optimizer,
             sorted_lengths = sorted_lengths.long().numpy()
           
             x, mel, y, phone, phone_lengths, f0 = x[indices], mel[indices], y[indices], phone[indices], phone_lengths[indices], f0[indices]
-
             # Feed data
             x, mel, y, phone, f0 = Variable(x), Variable(mel), Variable(y), Variable(phone), Variable(f0)
             if use_cuda:
                 x, mel, y, phone, f0 = x.cuda(), mel.cuda(), y.cuda(), phone.cuda(), f0.cuda()
             mel_outputs, linear_outputs, attn, prosody_outputs = model(
-                x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths, f0=f0)
+                inputs=x, phone_inputs=phone, targets=mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths, f0=f0)
 
             #mel_outputs, linear_outputs, attn = model(
             #    x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths)
@@ -365,7 +366,7 @@ if __name__ == "__main__":
         collate_fn=collate_fn, pin_memory=hparams.pin_memory)
 
     # Model
-    model = Tacotron(n_vocab=len(symbols),
+    model = Tacotron(n_vocab=len(symbols), n_phone=len(phones),
                      embedding_dim=256,
                      mel_dim=hparams.num_mels,
                      linear_dim=hparams.num_freq,

@@ -331,7 +331,7 @@ def is_end_of_frames(output, eps=0.2):
 
 
 class Tacotron(nn.Module):
-    def __init__(self, n_vocab, embedding_dim=256, mel_dim=80, linear_dim=1025,
+    def __init__(self, n_vocab, n_phone, embedding_dim=256, phone_embedding_dim=128, mel_dim=80, linear_dim=1025,
                  f0_dim=1, r=5, padding_idx=None, use_memory_mask=False):
         super(Tacotron, self).__init__()
         self.mel_dim = mel_dim
@@ -339,27 +339,30 @@ class Tacotron(nn.Module):
         self.use_memory_mask = use_memory_mask
         self.embedding = nn.Embedding(n_vocab, embedding_dim,
                                       padding_idx=padding_idx)
+        self.phone_embedding = nn.Embedding(n_phone, phone_embedding_dim,
+                                      padding_idx=padding_idx)
         # Trying smaller std
         self.embedding.weight.data.normal_(0, 0.3)
         self.encoder = Encoder(embedding_dim)
-        self.treeencoder = TreeEncoder(embedding_dim)
+        self.treeencoder = TreeEncoder(phone_embedding_dim)
         self.rnndecoder = RNNDecoder(32, f0_dim)
         self.decoder = Decoder(mel_dim, r)
 
         self.postnet = CBHG(mel_dim, K=8, projections=[256, mel_dim])
         self.last_linear = nn.Linear(mel_dim * 2, linear_dim)
 
-    def forward(self, inputs, targets=None, input_lengths=None, phone_lengths=None, f0=None):
+    def forward(self, inputs, phone_inputs, targets=None, input_lengths=None, phone_lengths=None, f0=None):
         B = inputs.size(0)
 
         inputs = self.embedding(inputs)
         # (B, T', in_dim)
         phone_lengths=phone_lengths.cuda()
-        
+        phone_embedding = self.phone_embedding(phone_inputs)
         encoder_outputs = self.encoder(inputs, input_lengths)
        # import pdb
        # pdb.set_trace()
-        prosody_embedding = self.treeencoder(inputs, phone_lengths)
+        
+        prosody_embedding = self.treeencoder(phone_embedding, phone_lengths)
 
         if self.use_memory_mask:
             memory_lengths = input_lengths
