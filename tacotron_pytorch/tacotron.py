@@ -150,11 +150,9 @@ class Encoder(nn.Module):
 class TreeEncoder(nn.Module):
     def __init__(self, in_dim):
         super(TreeEncoder, self).__init__()
-        self.prenet = Prenet(in_dim, sizes=[256, 128])
-        self.treelstm = BinaryTreeLSTM(word_dim=128, hidden_dim=16, use_leaf_rnn=True, intra_attention=False, gumbel_temperature=1, bidirectional=True)
+        self.treelstm = BinaryTreeLSTM(word_dim=in_dim, hidden_dim=16, use_leaf_rnn=True, intra_attention=False, gumbel_temperature=1, bidirectional=True)
 
     def forward(self, inputs, input_lengths=None):
-        inputs = self.prenet(inputs)
         return self.treelstm(inputs, input_lengths)
 
 class RNNDecoder(nn.Module):
