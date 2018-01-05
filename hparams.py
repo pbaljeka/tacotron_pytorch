@@ -21,7 +21,7 @@ hparams = tf.contrib.training.HParams(
     f0_type="framewise",
     unit_type="phone", # smallphone/phone/syl
     unit_dim=364, #109/364/51
-    unit_embedding_dim=128,
+    unit_embedding_dim=32,
     # Model:
     # TODO: add more configurable hparams
     outputs_per_step=5,
@@ -33,7 +33,7 @@ hparams = tf.contrib.training.HParams(
     num_workers=2,
 
     # Training:
-    batch_size=2,
+    batch_size=1,
     adam_beta1=0.9,
     adam_beta2=0.999,
     initial_learning_rate=0.002,

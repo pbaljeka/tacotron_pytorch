@@ -333,7 +333,7 @@ def is_end_of_frames(output, eps=0.2):
 
 
 class Tacotron(nn.Module):
-    def __init__(self, n_vocab, unit_dim, embedding_dim=256, unit_embedding_dim=128,  mel_dim=80, linear_dim=1025,
+    def __init__(self, n_vocab, unit_dim, embedding_dim=256, unit_embedding_dim=64,  mel_dim=80, linear_dim=1025,
                  f0_dim=1, r=5, padding_idx=None, use_memory_mask=False):
         super(Tacotron, self).__init__()
         self.mel_dim = mel_dim
@@ -346,13 +346,12 @@ class Tacotron(nn.Module):
         self.embedding.weight.data.normal_(0, 0.3)
         self.encoder = Encoder(embedding_dim)
         self.treeencoder = TreeEncoder(unit_embedding_dim)
-        self.rnndecoder = RNNDecoder(64, f0_dim)
         self.decoder = Decoder(mel_dim, r)
 
         self.postnet = CBHG(mel_dim, K=8, projections=[256, mel_dim])
         self.last_linear = nn.Linear(mel_dim * 2, linear_dim)
 
-    def forward(self, inputs, units, targets=None, input_lengths=None, unit_lengths=None, f0=None):
+    def forward(self, inputs, units, targets=None, input_lengths=None, unit_lengths=None):
         B = inputs.size(0)
 
         inputs = self.embedding(inputs)
@@ -372,7 +371,6 @@ class Tacotron(nn.Module):
         # (B, T', mel_dim*r)
         mel_outputs, alignments = self.decoder(
             encoder_outputs, prosody_emb, targets, memory_lengths=memory_lengths)
-        prosody_outputs = self.rnndecoder(prosody_emb, f0)
         # Post net processing below
 
         # Reshape
@@ -382,4 +380,4 @@ class Tacotron(nn.Module):
         linear_outputs = self.postnet(mel_outputs)
         linear_outputs = self.last_linear(linear_outputs)
 
-        return mel_outputs, linear_outputs, alignments, prosody_outputs
+        return mel_outputs, linear_outputs, alignments
