@@ -182,7 +182,7 @@ def collate_fn(batch):
     phone_batch = torch.LongTensor(d)
 
     phone_lengths = torch.LongTensor(phone_lengths)
-    e = np.array([_pad_2d(x[4], max_f0_len) for x in batch], dtype=np.int)
+    e = np.array([_pad_2d(x[4], max_f0_len) for x in batch], dtype=np.float32)
     f0_batch = torch.FloatTensor(e)
 
     return x_batch, input_lengths, mel_batch, y_batch, phone_batch, phone_lengths, f0_batch
