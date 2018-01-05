@@ -5,7 +5,7 @@ usage: train.py [options]
 options:
     --data-root=<dir>         Directory contains preprocessed features.
     --checkpoint-dir=<dir>    Directory where to save model checkpoints [default: checkpoints].
-    --pretrained-path=<name>    Directory of pretrained model [default: checkpoints].
+    --pretrained-path=<name>    Directory of pretrained model.
     --checkpoint-path=<name>  Restore model from checkpoint path if given.
     --hparams=<parmas>        Hyper parameters [default: ].
     -h, --help                Show this help message and exit
