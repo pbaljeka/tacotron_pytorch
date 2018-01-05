@@ -180,7 +180,7 @@ def collate_fn(batch):
     d = np.array([_pad_2d(x[3], max_unit_len) for x in batch], dtype=np.int)
     unit_batch = torch.FloatTensor(d)
     unit_lengths = torch.LongTensor(unit_lengths)
-    e = np.array([_pad_2d(x[4], max_f0_len) for x in batch], dtype=np.int)
+    e = np.array([_pad_2d(x[4], max_f0_len) for x in batch], dtype=np.float32)
     f0_batch = torch.FloatTensor(e)
 
     return x_batch, input_lengths, mel_batch, y_batch, unit_batch, unit_lengths, f0_batch
