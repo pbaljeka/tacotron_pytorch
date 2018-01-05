@@ -258,6 +258,8 @@ def train(model, data_loader, optimizer,
     global global_step, global_epoch
     while global_epoch < nepochs:
         running_loss = 0.
+        running_f0_loss = 0.
+        running_acoustic_loss = 0.
         for step, (x, input_lengths, mel, y, phone, phone_lengths, f0) in tqdm(enumerate(data_loader)):
             # Decay learning rate
             current_lr = _learning_rate_decay(init_lr, global_step)
@@ -289,7 +291,8 @@ def train(model, data_loader, optimizer,
                 + 0.5 * criterion(linear_outputs[:, :, :n_priority_freq],
                                   y[:, :, :n_priority_freq])
             F0_loss = criterion(prosody_outputs, f0) 
-            loss = mel_loss + linear_loss + F0_loss
+            Acoustic_loss = mel_loss + linear_loss 
+            loss = Acoustic_loss + F0_loss
 
             if global_step > 0 and global_step % checkpoint_interval == 0:
                 save_states(
@@ -314,10 +317,14 @@ def train(model, data_loader, optimizer,
 
             global_step += 1
             running_loss += loss.data[0]
+            running_f0_loss += F0_loss.data[0]
+            running_acoustic_loss += Acoustic_loss.data[0]
 
         averaged_loss = running_loss / (len(data_loader))
         log_value("loss (per epoch)", averaged_loss, global_epoch)
         print("Loss: {}".format(running_loss / (len(data_loader))))
+        print("Acoustic Loss: {}".format(running_acoustic_loss / (len(data_loader))))
+        print("F0 Loss: {}".format(running_f0_loss / (len(data_loader))))
 
         global_epoch += 1
 
