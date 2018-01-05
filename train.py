@@ -5,6 +5,7 @@ usage: train.py [options]
 options:
     --data-root=<dir>         Directory contains preprocessed features.
     --checkpoint-dir=<dir>    Directory where to save model checkpoints [default: checkpoints].
+    --pretrained-path=<name>  Directory of pretrained model
     --checkpoint-path=<name>  Restore model from checkpoint path if given.
     --hparams=<parmas>        Hyper parameters [default: ].
     -h, --help                Show this help message and exit
@@ -331,12 +332,19 @@ def save_checkpoint(model, optimizer, step, checkpoint_dir, epoch):
     }, checkpoint_path)
     print("Saved checkpoint:", checkpoint_path)
 
+def _transfer(pretrained_dict, model_dict):
+    pretrained_dict = {k:v for k,v in pretrained_dict.items() if k in model_dict}
+    model_dict.update(pretrained_dict)
+    return model_dict
+
+
 
 if __name__ == "__main__":
     args = docopt(__doc__)
     print("Command line args:\n", args)
     checkpoint_dir = args["--checkpoint-dir"]
     checkpoint_path = args["--checkpoint-path"]
+    pretrained_path = args["--pretrained-path"]
     data_root = args["--data-root"]
     if data_root:
         DATA_ROOT = data_root
@@ -390,6 +398,13 @@ if __name__ == "__main__":
                                hparams.adam_beta1, hparams.adam_beta2),
                            weight_decay=hparams.weight_decay)
 
+    # Load pre-trained model
+    if pretrained_path:
+        print("Load checkpoint from: {}".format(pretrained_path))
+        pretrained_model = torch.load(pretrained_path)
+        model_dict = _transfer(pretrained_model["state_dict"], model.state_dict())
+        model.load_state_dict(model_dict)
+    
     # Load checkpoint
     if checkpoint_path:
         print("Load checkpoint from: {}".format(checkpoint_path))

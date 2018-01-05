@@ -214,8 +214,8 @@ class Decoder(nn.Module):
             BahdanauAttention(256)
         )
         self.memory_layer = nn.Linear(256, 256, bias=False)
-        self.project_to_decoder_in = nn.Linear(544, 256) #256 + 256 + 128
-
+        self.project_to_decoder_in = nn.Linear(512, 256) #256 + 256 + 128
+        self.project_prosody_emb_to_decoder_in = nn.Linear(64, 256)
         self.decoder_rnns = nn.ModuleList(
             [nn.GRUCell(256, 256) for _ in range(2)])
 
@@ -290,7 +290,9 @@ class Decoder(nn.Module):
             #import pdb; pdb.set_trace()
             # Concat RNN output and attention context vector
             decoder_input = self.project_to_decoder_in(
-                torch.cat((attention_rnn_hidden, current_attention, prosody_embedding[0]), -1))
+                torch.cat((attention_rnn_hidden, current_attention), -1))
+            prosody_input = self.project_prosody_emb_to_decoder_in(prosody_embedding)
+            decoder_input = decoder_input + prosody_input
 
             # Pass through the decoder RNNs
             for idx in range(len(self.decoder_rnns)):
@@ -344,7 +346,7 @@ class Tacotron(nn.Module):
         self.embedding.weight.data.normal_(0, 0.3)
         self.encoder = Encoder(embedding_dim)
         self.treeencoder = TreeEncoder(unit_embedding_dim)
-        self.rnndecoder = RNNDecoder(32, f0_dim)
+        self.rnndecoder = RNNDecoder(64, f0_dim)
         self.decoder = Decoder(mel_dim, r)
 
         self.postnet = CBHG(mel_dim, K=8, projections=[256, mel_dim])
@@ -362,15 +364,15 @@ class Tacotron(nn.Module):
        # import pdb
        # pdb.set_trace()
         prosody_embedding = self.treeencoder(unit_emb, unit_lengths)
-
+        prosody_emb = torch.cat((prosody_embedding[0], prosody_embedding[1]),-1)
         if self.use_memory_mask:
             memory_lengths = input_lengths
         else:
             memory_lengths = None
         # (B, T', mel_dim*r)
         mel_outputs, alignments = self.decoder(
-            encoder_outputs, prosody_embedding, targets, memory_lengths=memory_lengths)
-        prosody_outputs = self.rnndecoder(prosody_embedding[0], f0)
+            encoder_outputs, prosody_emb, targets, memory_lengths=memory_lengths)
+        prosody_outputs = self.rnndecoder(prosody_emb, f0)
         # Post net processing below
 
         # Reshape
