@@ -123,9 +123,6 @@ class MelSpecDataSource(_NPYDataSource):
     def __init__(self):
         super(MelSpecDataSource, self).__init__(1)
 
-class F0DataSource(_NPYDataSource):
-    def __init__(self,col_num):
-        super(F0DataSource, self).__init__(col_num)
 
 class EmbeddingDataSource(_NPYDataSource):
     def __init__(self):
@@ -138,15 +135,15 @@ class LinearSpecDataSource(_NPYDataSource):
 
 
 class PyTorchDataset(object):
-    def __init__(self, X, Mel, Y, Phones, F0):
+    def __init__(self, X, Mel, Y, Phones):
         self.X = X
         self.Mel = Mel
         self.Y = Y
         self.Phones = Phones
-        self.F0 = F0
+   
 
     def __getitem__(self, idx):
-        return self.X[idx], self.Mel[idx], self.Y[idx], self.Phones[idx], self.F0[idx]
+        return self.X[idx], self.Mel[idx], self.Y[idx], self.Phones[idx]
 
     def __len__(self):
         return len(self.X)
@@ -159,7 +156,6 @@ def collate_fn(batch):
     max_input_len = np.max(input_lengths)
     # Add single zeros frame at least, so plus 1
     max_target_len = np.max([len(x[1]) for x in batch]) + 1
-    max_f0_len = np.max([len(x[4]) for x in batch]) + 1 
     phone_lengths = [len(x[3]) for x in batch]
     max_phone_len = np.max(phone_lengths)
     if max_target_len % r != 0:
@@ -180,13 +176,9 @@ def collate_fn(batch):
     y_batch = torch.FloatTensor(c)
     d = np.array([_pad(x[3], max_phone_len) for x in batch], dtype=np.int)
     phone_batch = torch.LongTensor(d)
-
     phone_lengths = torch.LongTensor(phone_lengths)
-    e = np.array([_pad_2d(x[4], max_f0_len) for x in batch], dtype=np.int)
-    f0_batch = torch.FloatTensor(e)
 
-    return x_batch, input_lengths, mel_batch, y_batch, phone_batch, phone_lengths, f0_batch
-
+    return x_batch, input_lengths, mel_batch, y_batch, phone_batch, phone_lengths
 
 def save_alignment(path, attn):
     plot_alignment(attn.T, path, info="tacotron, step={}".format(global_step))
@@ -258,9 +250,7 @@ def train(model, data_loader, optimizer,
     global global_step, global_epoch
     while global_epoch < nepochs:
         running_loss = 0.
-        running_f0_loss = 0.
-        running_acoustic_loss = 0.
-        for step, (x, input_lengths, mel, y, phone, phone_lengths, f0) in tqdm(enumerate(data_loader)):
+        for step, (x, input_lengths, mel, y, phone, phone_lengths) in tqdm(enumerate(data_loader)):
             # Decay learning rate
             current_lr = _learning_rate_decay(init_lr, global_step)
             for param_group in optimizer.param_groups:
@@ -273,13 +263,13 @@ def train(model, data_loader, optimizer,
                 input_lengths.view(-1), dim=0, descending=True)
             sorted_lengths = sorted_lengths.long().numpy()
           
-            x, mel, y, phone, phone_lengths, f0 = x[indices], mel[indices], y[indices], phone[indices], phone_lengths[indices], f0[indices]
+            x, mel, y, phone, phone_lengths = x[indices], mel[indices], y[indices], phone[indices], phone_lengths[indices]
             # Feed data
-            x, mel, y, phone, f0 = Variable(x), Variable(mel), Variable(y), Variable(phone), Variable(f0)
+            x, mel, y, phone = Variable(x), Variable(mel), Variable(y), Variable(phone)
             if use_cuda:
-                x, mel, y, phone, f0 = x.cuda(), mel.cuda(), y.cuda(), phone.cuda(), f0.cuda()
-            mel_outputs, linear_outputs, attn, prosody_outputs = model(
-                inputs=x, phone_inputs=phone, targets=mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths, f0=f0)
+                x, mel, y, phone = x.cuda(), mel.cuda(), y.cuda(), phone.cuda()
+            mel_outputs, linear_outputs, attn = model(
+                inputs=x, phone_inputs=phone, targets=mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths)
 
             #mel_outputs, linear_outputs, attn = model(
             #    x, mel, input_lengths=sorted_lengths, phone_lengths=phone_lengths)
@@ -290,9 +280,7 @@ def train(model, data_loader, optimizer,
             linear_loss = 0.5 * criterion(linear_outputs, y) \
                 + 0.5 * criterion(linear_outputs[:, :, :n_priority_freq],
                                   y[:, :, :n_priority_freq])
-            F0_loss = criterion(prosody_outputs, f0) 
-            Acoustic_loss = mel_loss + linear_loss 
-            loss = Acoustic_loss + F0_loss
+            loss = mel_loss + linear_loss 
 
             if global_step > 0 and global_step % checkpoint_interval == 0:
                 save_states(
@@ -310,21 +298,16 @@ def train(model, data_loader, optimizer,
             # Logs
             log_value("loss", float(loss.data[0]), global_step)
             log_value("mel loss", float(mel_loss.data[0]), global_step)
-            log_value("F0 loss", float(F0_loss.data[0]), global_step)
             log_value("linear loss", float(linear_loss.data[0]), global_step)
             log_value("gradient norm", grad_norm, global_step)
             log_value("learning rate", current_lr, global_step)
 
             global_step += 1
             running_loss += loss.data[0]
-            running_f0_loss += F0_loss.data[0]
-            running_acoustic_loss += Acoustic_loss.data[0]
 
         averaged_loss = running_loss / (len(data_loader))
         log_value("loss (per epoch)", averaged_loss, global_epoch)
         print("Loss: {}".format(running_loss / (len(data_loader))))
-        print("Acoustic Loss: {}".format(running_acoustic_loss / (len(data_loader))))
-        print("F0 Loss: {}".format(running_f0_loss / (len(data_loader))))
 
         global_epoch += 1
 
@@ -366,14 +349,8 @@ if __name__ == "__main__":
     Mel = FileSourceDataset(MelSpecDataSource())
     Y = FileSourceDataset(LinearSpecDataSource())
     Phones = FileSourceDataset(PhoneDataSource(4))
-    if hparams.f0_type == "framewise":
-        col_num = 5; hparams.f0_dim =1
-    else:
-        col_num = 6; hparams.f0_dim=10
-
-    F0 = FileSourceDataset(F0DataSource(col_num))
     # Dataset and Dataloader setup
-    dataset = PyTorchDataset(X, Mel, Y, Phones, F0)
+    dataset = PyTorchDataset(X, Mel, Y, Phones)
     data_loader = data_utils.DataLoader(
         dataset, batch_size=hparams.batch_size,
         num_workers=hparams.num_workers, shuffle=True,
@@ -384,7 +361,6 @@ if __name__ == "__main__":
                      embedding_dim=256,
                      mel_dim=hparams.num_mels,
                      linear_dim=hparams.num_freq,
-                     f0_dim=hparams.f0_dim,
                      r=hparams.outputs_per_step,
                      padding_idx=hparams.padding_idx,
                      use_memory_mask=hparams.use_memory_mask,
