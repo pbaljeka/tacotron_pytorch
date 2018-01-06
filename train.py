@@ -177,7 +177,7 @@ def collate_fn(batch):
                  dtype=np.float32)
     y_batch = torch.FloatTensor(c)
     #d = np.array([_pad(x[3], max_phone_len) for x in batch], dtype=np.int)
-    d = np.array([_pad_2d(x[3], max_unit_len) for x in batch], dtype=np.int)
+    d = np.array([_pad_2d(x[3], max_unit_len) for x in batch], dtype=np.float32)
     unit_batch = torch.FloatTensor(d)
     unit_lengths = torch.LongTensor(unit_lengths)
     e = np.array([_pad_2d(x[4], max_f0_len) for x in batch], dtype=np.float32)
@@ -367,11 +367,11 @@ if __name__ == "__main__":
     Y = FileSourceDataset(LinearSpecDataSource())
     print(hparams.unit_type)
     if hparams.unit_type == "phone":
-        unit_col=7; hparams.unit_dim=364; hparams.unit_embeding_dim=128
+        unit_col=7; hparams.unit_dim=400; hparams.unit_embeding_dim=128
     elif hparams.unit_type == "smallphone":
         unit_col =8; hparams.unit_dim=109; hparams.unit_embedding_dim=64
     elif hparams.unit_type == "syl":
-        unit_col =9; hparams.unit_dim=51; hparams.unit_embedding_dim=30
+        unit_col =9; hparams.unit_dim=144; hparams.unit_embedding_dim=32
     else:
         print("Undefined unit type")
     print(unit_col)
