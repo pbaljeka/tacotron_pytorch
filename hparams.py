@@ -17,8 +17,8 @@ hparams = tf.contrib.training.HParams(
     preemphasis=0.97,
     min_level_db=-100,
     ref_level_db=20,
-    f0_dim=1,
-    f0_type="framewise",
+    f0_dim=10,
+    f0_type="dctf0",
 
     # Model:
     # TODO: add more configurable hparams
@@ -31,7 +31,7 @@ hparams = tf.contrib.training.HParams(
     num_workers=2,
 
     # Training:
-    batch_size=2,
+    batch_size=32,
     adam_beta1=0.9,
     adam_beta2=0.999,
     initial_learning_rate=0.002,

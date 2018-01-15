@@ -1,7 +1,7 @@
 tacotron_pytorch/version.py
 checkpoints*
 log
-
+f0_phone_synth*/
 # Created by https://www.gitignore.io
 
 ### Python ###

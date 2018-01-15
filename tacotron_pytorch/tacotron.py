@@ -167,12 +167,13 @@ class RNNDecoder(nn.Module):
         self.projection = nn.Linear(output_dim, hidden_dim)
         self.gru = nn.GRUCell(hidden_dim, hidden_dim)
         self.linear = nn.Linear(hidden_dim, output_dim)
-        self.max_Decoder_steps = 200
+        self.max_decoder_steps = 200
     def forward(self, inputs, targets=None):
         outputs = [] 
         t=0;batch_size = inputs.size(0) 
         is_train = targets is not None
-        targets = targets.transpose(0,1)
+        if is_train:
+            targets = targets.transpose(0,1)
         if is_train: 
             T_decoder = targets.size(0)
         hidden = Variable(torch.zeros(batch_size, self.hidden_dim)).cuda()
@@ -180,7 +181,7 @@ class RNNDecoder(nn.Module):
         current_input = self.input_projection(inputs)
         while True:
             if t > 0:
-                current_input = outputs[-1] if is_train else targets[t-1]
+                current_input = outputs[-1] if not is_train else targets[t-1]
             
                 current_input = self.projection(current_input)
             hidden = self.gru(current_input, hidden)
@@ -334,7 +335,7 @@ def is_end_of_frames(output, eps=0.2):
 
 class Tacotron(nn.Module):
     def __init__(self, n_vocab, n_phone, embedding_dim=256, phone_embedding_dim=128, mel_dim=80, linear_dim=1025,
-                 f0_dim=1, r=5, padding_idx=None, use_memory_mask=False):
+                 f0_dim=10, r=5, padding_idx=None, use_memory_mask=False):
         super(Tacotron, self).__init__()
         self.mel_dim = mel_dim
         self.linear_dim = linear_dim
