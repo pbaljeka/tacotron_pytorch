@@ -69,14 +69,15 @@ def _pad_2d(x, max_len):
 
 
 class TextDataSource(FileDataSource):
-    def __init__(self):
+    def __init__(self, col):
+        self.col = col
         self._cleaner_names = [x.strip() for x in hparams.cleaners.split(',')]
 
     def collect_files(self):
         meta = join(DATA_ROOT, "train.txt")
         with open(meta, "rb") as f:
             lines = f.readlines()
-        lines = list(map(lambda l: l.decode("utf-8").split("|")[-1], lines))
+        lines = list(map(lambda l: l.decode("utf-8").split("|")[self.col], lines))
         return lines
 
     def collect_features(self, text):
@@ -310,7 +311,7 @@ if __name__ == "__main__":
     os.makedirs(checkpoint_dir, exist_ok=True)
 
     # Input dataset definitions
-    X = FileSourceDataset(TextDataSource())
+    X = FileSourceDataset(TextDataSource(3))
     Mel = FileSourceDataset(MelSpecDataSource())
     Y = FileSourceDataset(LinearSpecDataSource())
 
