@@ -1,6 +1,6 @@
 tacotron_pytorch/version.py
 *checkpoints*/
-*synth*/
+wav_synth*/
 training/
 log
 
