@@ -41,9 +41,9 @@ def tts(model, text):
         model = model.cuda()
     # TODO: Turning off dropout of decoder's prenet causes serious performance
     # regression, not sure why.
-    # model.decoder.eval()
+    #model.decoder.eval()
     model.encoder.eval()
-    model.postnet.eval()
+    #model.postnet.eval()
 
     sequence = np.array(text_to_sequence(text, [hparams.cleaners]))
     sequence = Variable(torch.from_numpy(sequence)).unsqueeze(0)
@@ -89,7 +89,8 @@ if __name__ == "__main__":
     with open(text_list_file_path, "rb") as f:
         lines = f.readlines()
         for idx, line in enumerate(lines):
-            text = line.decode("utf-8")[:-1]
+            line_items = line.decode("utf-8")[:-1].split('|')
+            text = line_items[3]
             words = nltk.word_tokenize(text)
             print("{}: {} ({} chars, {} words)".format(idx, text, len(text), len(words)))
             waveform, alignment, _ = tts(model, text)
