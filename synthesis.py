@@ -43,7 +43,7 @@ def tts(model, text):
     # regression, not sure why.
     #model.decoder.eval()
     model.encoder.eval()
-    #model.postnet.eval()
+    model.postnet.eval()
 
     sequence = np.array(text_to_sequence(text, [hparams.cleaners]))
     sequence = Variable(torch.from_numpy(sequence)).unsqueeze(0)
