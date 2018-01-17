@@ -409,15 +409,13 @@ if __name__ == "__main__":
         ignored_params_ids = []
         for param_list in ignore_list:
             ignored_params_ids.extend(list(map(id, param_list)))
-        base_params = filter(lambda p: id(p) not in ignored_params_ids, model.parameters())
-        len(list(base_params))
-        len(list(ignored_params))
+        #print(ignored_params)
+        #ignored_params=[id(model.treeencoder.parameters()), id(model.rnndecoder.parameters())]
+        base_params = filter(lambda p: id(p) not in ignored_params, model.parameters())
         #ignore_params = filter(lambda p: id(p) not in base_params, model.parameters())
         #print(list(base_params))
         #import pdb; pdb.set_trace()
-        optimizer = optim.Adam([{'params':base_params, 'lr':current_lr},  {'params':ignored_params, 'lr': 0.02}], weight_decay=hparams.weight_decay)
-        for pg in optimizer.param_groups:
-            print(pg)
+        optimizer = optim.Adam([{'params':base_params, 'lr':0.01},  {'params':ignored_params, 'lr': 0.02}])
     
 
        # optimizer_dict, pretrain_dict = _transfer(pretrained_model["optimizer"], optimizer.state_dict())

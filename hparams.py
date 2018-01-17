@@ -25,7 +25,7 @@ hparams = tf.contrib.training.HParams(
     outputs_per_step=5,
     padding_idx=None,
     use_memory_mask=False,
-
+    frozen=False,
     # Data loader
     pin_memory=True,
     num_workers=2,
@@ -39,7 +39,7 @@ hparams = tf.contrib.training.HParams(
     nepochs=1000,
     weight_decay=0.0,
     clip_thresh=1.0,
-
+    Frozen=True,
     # Save
     checkpoint_interval=1500,
 
