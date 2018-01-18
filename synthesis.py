@@ -17,7 +17,8 @@ import os
 from os.path import dirname, join
 tacotron_lib_dir = join(dirname(__file__), "lib", "tacotron")
 sys.path.append(tacotron_lib_dir)
-from text import text_to_sequence, symbols
+from text import text_to_sequence, symbols, prosody_symbols, phone_to_sequence
+from text.prosody_symbols import phones, syllables
 from util import audio
 from util.plot import plot_alignment
 
@@ -34,24 +35,30 @@ from tqdm import tqdm
 use_cuda = torch.cuda.is_available()
 
 
-def tts(model, text):
+def tts(model, text, filename,parent_dir=os.path.join(os.getcwd(),"training")):
     """Convert text to speech waveform given a Tacotron model.
     """
     if use_cuda:
         model = model.cuda()
     # TODO: Turning off dropout of decoder's prenet causes serious performance
     # regression, not sure why.
-    # model.decoder.eval()
+    #model.decoder.eval()
     model.encoder.eval()
+    model.treeencoder.eval()
     model.postnet.eval()
 
     sequence = np.array(text_to_sequence(text, [hparams.cleaners]))
     sequence = Variable(torch.from_numpy(sequence)).unsqueeze(0)
+    filepath=os.path.join(parent_dir,filename)
+    unit_sequence = np.load(filepath)
+    unit_sequence = Variable(torch.FloatTensor(unit_sequence)).unsqueeze(0)
+    unit_lengths = torch.LongTensor(unit_sequence.shape[0])
     if use_cuda:
         sequence = sequence.cuda()
+        unit_sequence = unit_sequence.cuda()
 
     # Greedy decoding
-    mel_outputs, linear_outputs, alignments = model(sequence)
+    mel_outputs, linear_outputs, alignments = model(sequence, units=unit_sequence, unit_lengths=unit_lengths)
 
     linear_output = linear_outputs[0].cpu().data.numpy()
     spectrogram = audio._denormalize(linear_output)
@@ -71,9 +78,16 @@ if __name__ == "__main__":
     dst_dir = args["<dst_dir>"]
     max_decoder_steps = int(args["--max-decoder-steps"])
     file_name_suffix = args["--file-name-suffix"]
+    if hparams.unit_type == "phone":
+        unit_col=7; hparams.unit_dim=364;hparams.unit_embedding_dim=32
+    elif hparams.unit_type == "syl":
+        unit_col=9; hparams.unit_dim=51; hparams.unit_embedding_dim=32
+    else:
+        print("Undefined unit type")
 
-    model = Tacotron(n_vocab=len(symbols),
+    model = Tacotron(n_vocab=len(symbols), unit_dim=hparams.unit_dim,
                      embedding_dim=256,
+                     unit_embedding_dim=hparams.unit_embedding_dim,
                      mel_dim=hparams.num_mels,
                      linear_dim=hparams.num_freq,
                      r=hparams.outputs_per_step,
@@ -89,10 +103,12 @@ if __name__ == "__main__":
     with open(text_list_file_path, "rb") as f:
         lines = f.readlines()
         for idx, line in enumerate(lines):
-            text = line.decode("utf-8")[:-1]
+            line_items = line.decode("utf-8")[:-1].split('|')
+            text = line_items[3]
+            unit_seq_path = line_items[int(unit_col)]
             words = nltk.word_tokenize(text)
             print("{}: {} ({} chars, {} words)".format(idx, text, len(text), len(words)))
-            waveform, alignment, _ = tts(model, text)
+            waveform, alignment, _ = tts(model, text, unit_seq_path)
             dst_wav_path = join(dst_dir, "{}{}.wav".format(idx, file_name_suffix))
             dst_alignment_path = join(dst_dir, "{}_alignment.png".format(idx))
             plot_alignment(alignment.T, dst_alignment_path,
