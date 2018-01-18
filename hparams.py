@@ -25,21 +25,20 @@ hparams = tf.contrib.training.HParams(
     outputs_per_step=5,
     padding_idx=None,
     use_memory_mask=False,
-    frozen=False,
+    frozen=True,
     # Data loader
     pin_memory=True,
     num_workers=2,
 
     # Training:
-    batch_size=32,
+    batch_size=16,
     adam_beta1=0.9,
     adam_beta2=0.999,
-    initial_learning_rate=0.002,
+    initial_learning_rate=0.0004,
     decay_learning_rate=True,
     nepochs=1000,
     weight_decay=0.0,
     clip_thresh=1.0,
-    Frozen=True,
     # Save
     checkpoint_interval=1500,
 

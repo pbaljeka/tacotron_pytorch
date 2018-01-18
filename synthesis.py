@@ -79,7 +79,7 @@ if __name__ == "__main__":
     dst_dir = args["<dst_dir>"]
     max_decoder_steps = int(args["--max-decoder-steps"])
     file_name_suffix = args["--file-name-suffix"]
-    f0_type = args["--f0-type"]
+    f0_type = "dctf0"
     if f0_type == "dctf0":
         f0_dim = 10
     elif f0_type == "framewisef0":

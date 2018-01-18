@@ -402,24 +402,24 @@ if __name__ == "__main__":
         model_dict, pretrained_dict = _transfer(pretrained_model["state_dict"], model.state_dict())
         model.load_state_dict(model_dict)
         current_lr = _learning_rate_decay(hparams.initial_learning_rate, pretrained_model["global_step"])
-        ignore_list=[model.treeencoder.parameters(), model.decoder.project_prosody_emb_to_decoder_in.parameters(), model.rnndecoder.parameters()]
+        #ignore_list=[model.treeencoder.parameters(), model.decoder.project_prosody_emb_to_decoder_in.parameters(), model.rnndecoder.parameters()]
         ignored_params=[]
-        for prams in ignore_list:
+        for prams in [model.treeencoder.parameters(), model.decoder.project_prosody_emb_to_decoder_in.parameters(), model.rnndecoder.parameters()]:
             ignored_params +=list(prams)
         ignored_params_ids = []
-        for param_list in ignore_list:
+        for param_list in [model.treeencoder.parameters(), model.decoder.project_prosody_emb_to_decoder_in.parameters(), model.rnndecoder.parameters()]:
             ignored_params_ids.extend(list(map(id, param_list)))
+        print(len(ignored_params_ids))
         base_params = filter(lambda p: id(p) not in ignored_params_ids, model.parameters())
-        len(list(base_params))
-        len(list(ignored_params))
-        #ignore_params = filter(lambda p: id(p) not in base_params, model.parameters())
-        #print(list(base_params))
-        #import pdb; pdb.set_trace()
-        optimizer = optim.Adam([{'params':base_params, 'lr':current_lr},  {'params':ignored_params, 'lr': 0.02}], weight_decay=hparams.weight_decay)
-        for pg in optimizer.param_groups:
-            print(pg)
-    
-
+        if hparams.frozen:
+            print("Freezing weights for pretrained model")    
+            for params in base_params:
+                params.requires_grad = False
+            optimizer = optim.Adam([{'params':ignored_params, 'lr': hparams.initial_learning_rate}], weight_decay=1.0)
+  
+        else:
+            optimizer = optim.Adam([{'params':base_params, 'lr':current_lr},  {'params':ignored_params, 'lr': hparams.initial_learning_rate}], weight_decay=1.0)
+ 
        # optimizer_dict, pretrain_dict = _transfer(pretrained_model["optimizer"], optimizer.state_dict())
        # optimizer.load_state_dict(optimizer_dict)
           
