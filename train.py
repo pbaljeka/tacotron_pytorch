@@ -389,12 +389,7 @@ if __name__ == "__main__":
                      padding_idx=hparams.padding_idx,
                      use_memory_mask=hparams.use_memory_mask,
                      )
-    #optimizer = optim.Adam(model.parameters(),
-    #                       lr=hparams.initial_learning_rate, betas=(
-    #                           hparams.adam_beta1, hparams.adam_beta2),
-    #                       weight_decay=hparams.weight_decay)
-   
-
+    
     # Load pre-trained model
     if pretrained_path:
         print("Load checkpoint from: {}".format(pretrained_path))
@@ -424,7 +419,13 @@ if __name__ == "__main__":
        # optimizer.load_state_dict(optimizer_dict)
           
                     
+    else:
+        optimizer = optim.Adam(model.parameters(),
+                           lr=hparams.initial_learning_rate, betas=(
+                               hparams.adam_beta1, hparams.adam_beta2),
+                           weight_decay=hparams.weight_decay)
    
+ 
 
 
     # Load checkpoint
