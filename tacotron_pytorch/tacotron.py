@@ -167,20 +167,20 @@ class RNNDecoder(nn.Module):
         self.projection = nn.Linear(output_dim, hidden_dim)
         self.gru = nn.GRUCell(hidden_dim, hidden_dim)
         self.linear = nn.Linear(hidden_dim, output_dim)
-        self.max_Decoder_steps = 200
+        self.max_decoder_steps = 200
     def forward(self, inputs, targets=None):
         outputs = [] 
         t=0;batch_size = inputs.size(0) 
         is_train = targets is not None
-        targets = targets.transpose(0,1)
         if is_train: 
+            targets = targets.transpose(0,1)
             T_decoder = targets.size(0)
         hidden = Variable(torch.zeros(batch_size, self.hidden_dim)).cuda()
         #import pdb; pdb.set_trace()
         current_input = self.input_projection(inputs)
         while True:
             if t > 0:
-                current_input = outputs[-1] if is_train else targets[t-1]
+                current_input = outputs[-1] if not is_train else targets[t-1]
             
                 current_input = self.projection(current_input)
             hidden = self.gru(current_input, hidden)
