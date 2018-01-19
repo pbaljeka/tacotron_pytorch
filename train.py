@@ -19,7 +19,6 @@ tacotron_lib_dir = join(dirname(__file__), "lib", "tacotron")
 sys.path.append(tacotron_lib_dir)
 from text import text_to_sequence, symbols, prosody_symbols, phone_to_sequence
 from text.prosody_symbols import phones, syllables
-print(len(phones))
 from util import audio
 from util.plot import plot_alignment
 from tqdm import tqdm, trange
@@ -262,10 +261,10 @@ def train(model, data_loader, optimizer,
         running_acoustic_loss = 0.
         for step, (x, input_lengths, mel, y, phone, phone_lengths, f0) in tqdm(enumerate(data_loader)):
             # Decay learning rate
+            current_lr = []
             #current_lr = _learning_rate_decay(init_lr, global_step)
             for param_group in optimizer.param_groups:
-                print(" lr: ", param_group['lr']),
-            print
+                current_lr.append(param_group['lr']),
             optimizer.zero_grad()
 
             # Sort by length
@@ -313,7 +312,8 @@ def train(model, data_loader, optimizer,
             log_value("F0 loss", float(F0_loss.data[0]), global_step)
             log_value("linear loss", float(linear_loss.data[0]), global_step)
             log_value("gradient norm", grad_norm, global_step)
-            #log_value("learning rate", current_lr, global_step)
+            for rnum, clr in enumerate(current_lr):
+                log_value("learning rate" + str(rnum), clr, global_step)
 
             global_step += 1
             running_loss += loss.data[0]
