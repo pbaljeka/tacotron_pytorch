@@ -416,7 +416,7 @@ if __name__ == "__main__":
             pass
 
     # Setup tensorboard logger
-    tensorboard_logger.configure("log/run-test")
+    tensorboard_logger.configure(os.path.join('log', checkpoint_dir))
 
     print(hparams_debug_string())
 
